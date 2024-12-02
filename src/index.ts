@@ -44,7 +44,7 @@ const app = new Elysia()
     message: "Server is running",
     version: store.config.version
   }))
-  .get("/sort-server", sortServer)
+  .get("/server-port", sortServer)
   .listen(PORT);
 
 // Startup message
