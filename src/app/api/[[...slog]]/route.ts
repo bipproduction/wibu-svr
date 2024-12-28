@@ -4,6 +4,8 @@ import { Elysia } from "elysia";
 import overview from "./_route/overview";
 import projectEnv from "@/constant/project-env";
 import deployed from "./_route/deployed";
+import nginx from "./_route/nginx";
+import apiProcess from "./_route/process";
 
 const corsConfig = {
   origin: "*",
@@ -19,7 +21,10 @@ const app = new Elysia()
   .use(swagger({ path: "/api/swagger" }))
   .use(cors(corsConfig))
   .use(overview)
-  .use(deployed);
+  .use(deployed)
+  .use(nginx)
+  .use(apiProcess);
+
 
 // Expose methods
 export const GET = app.handle;

@@ -1,7 +1,8 @@
 // Import styles of packages that you've installed.
 // All packages except `@mantine/hooks` require styles imports
 import '@mantine/core/styles.css';
-
+import '@mantine/notifications/styles.css';
+import { Notifications } from '@mantine/notifications';
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/core';
 
 export const metadata = {
@@ -20,7 +21,7 @@ export default function RootLayout({
         <ColorSchemeScript defaultColorScheme='dark' />
       </head>
       <body>
-        <MantineProvider defaultColorScheme='dark'>{children}</MantineProvider>
+        <MantineProvider defaultColorScheme='dark'><Notifications />{children}</MantineProvider>
       </body>
     </html>
   );

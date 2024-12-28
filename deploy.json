@@ -1,0 +1,57 @@
+{
+    "project": {
+        "name": "darmasaba",
+        "repository": "https://github.com/bipproduction/sistem-desa-mandiri.git",
+        "domain": "wibudev.com",
+        "deployments": {
+            "production": {
+                "env": {
+                    "WIBU_APIKEY": "your-api-key",
+                    "TEST_TOKEN": "your-test-token"
+                },
+                "branch": "main",
+                "deployed": {
+                    "current": {
+                        "subdomain": "darmasaba",
+                        "ports": [
+                            3037,
+                            3038,
+                            3039,
+                            3040
+                        ]
+                    },
+                    "releases": {
+                        "subdomain": "darmasaba-releases",
+                        "ports": [
+                            3037
+                        ]
+                    }
+                }
+            },
+            "staging": {
+                "env": {
+                    "WIBU_APIKEY": "your-api-key",
+                    "TEST_TOKEN": "your-test-token"
+                },
+                "branch": "staging",
+                "deployed": {
+                    "current": {
+                        "subdomain": "darmasaba-staging",
+                        "ports": [
+                            3037,
+                            3038,
+                            3039,
+                            3040
+                        ]
+                    },
+                    "releases": {
+                        "subdomain": "darmasaba-staging-releases",
+                        "ports": [
+                            3037
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}
