@@ -1,0 +1,153 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id             String           @id @default(uuid())
+  name           String
+  repository     String           @unique
+  createdAt      DateTime?        @default(now())
+  updatedAt      DateTime?        @updatedAt
+  active         Boolean?         @default(true)
+  envItem        EnvItem[]
+  Commit         Commit[]
+  ProjectCommit  ProjectCommit[]
+  Branch         Branch[]
+  PromoteHistory PromoteHistory[]
+  DeployHistory  DeployHistory[]
+  BuildLog       BuildLog[]
+}
+
+model Branch {
+  id             String           @id @default(uuid())
+  name           String           @unique
+  sha            String?
+  createdAt      DateTime?        @default(now())
+  updatedAt      DateTime?        @updatedAt
+  projectId      String
+  project        Project          @relation(fields: [projectId], references: [id])
+  Commit         Commit[]
+  PromoteHistory PromoteHistory[]
+
+  @@unique([projectId, name])
+}
+
+model EnvGroup {
+  id             String           @id @default(uuid())
+  name           String           @unique
+  createdAt      DateTime?        @default(now())
+  updatedAt      DateTime?        @updatedAt
+  envItem        EnvItem[]
+  ProjectCommit  ProjectCommit[]
+  PromoteHistory PromoteHistory[]
+}
+
+model EnvItem {
+  id         String    @id @default(uuid())
+  text       String    @db.Text
+  projectId  String
+  envGroupId String
+  envGroup   EnvGroup  @relation(fields: [envGroupId], references: [id])
+  project    Project   @relation(fields: [projectId], references: [id])
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@unique([projectId, envGroupId])
+}
+
+model Commit {
+  // id is sha
+  id             String           @id @default(uuid())
+  sha            String           @unique
+  author         String?
+  email          String?
+  date           DateTime?
+  message        String?
+  url            String?
+  projectId      String
+  branchId       String?
+  branch         Branch?          @relation(fields: [branchId], references: [id])
+  project        Project          @relation(fields: [projectId], references: [id])
+  ProjectCommit  ProjectCommit[]
+  createdAt      DateTime?        @default(now())
+  updatedAt      DateTime?        @updatedAt
+  PromoteHistory PromoteHistory[]
+  DeployHistory  DeployHistory[]
+  BuildLog       BuildLog[]
+}
+
+model ProjectCommit {
+  id         String    @id @default(uuid())
+  projectId  String
+  project    Project   @relation(fields: [projectId], references: [id])
+  commitId   String
+  commit     Commit    @relation(fields: [commitId], references: [id])
+  envGroupId String
+  envGroup   EnvGroup  @relation(fields: [envGroupId], references: [id])
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@unique([projectId, envGroupId, commitId])
+}
+
+model PromoteHistory {
+  id         String    @id @default(uuid())
+  projectId  String
+  project    Project   @relation(fields: [projectId], references: [id])
+  branchId   String
+  branch     Branch    @relation(fields: [branchId], references: [id])
+  commitId   String
+  commit     Commit    @relation(fields: [commitId], references: [id])
+  envGroupId String
+  envGroup   EnvGroup  @relation(fields: [envGroupId], references: [id])
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@unique([projectId, branchId, commitId, envGroupId])
+}
+
+model DeployHistory {
+  id        String    @id @default(uuid())
+  projectId String
+  project   Project   @relation(fields: [projectId], references: [id])
+  commitId  String
+  commit    Commit    @relation(fields: [commitId], references: [id])
+  isSuccess Boolean?  @default(false)
+  message   String?   @db.Text
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+
+  @@unique([projectId, commitId])
+}
+
+model BuildLog {
+  id        String          @id @default(uuid())
+  projectId String
+  project   Project         @relation(fields: [projectId], references: [id])
+  commitId  String
+  commit    Commit          @relation(fields: [commitId], references: [id])
+  jsonLog   Json?           @db.Json
+  stringLog String?         @db.Text
+  createdAt DateTime?       @default(now())
+  updatedAt DateTime?       @updatedAt
+  status    BuildLogStatus?
+
+  @@unique([projectId, commitId])
+}
+
+enum BuildLogStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+}

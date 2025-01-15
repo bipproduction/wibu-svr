@@ -1,9 +1,10 @@
 // Import styles of packages that you've installed.
 // All packages except `@mantine/hooks` require styles imports
-import '@mantine/core/styles.css';
-import '@mantine/notifications/styles.css';
-import { Notifications } from '@mantine/notifications';
 import { ColorSchemeScript, MantineProvider, mantineHtmlProps } from '@mantine/core';
+import '@mantine/core/styles.css';
+import { Notifications } from '@mantine/notifications';
+import '@mantine/notifications/styles.css';
+import 'react-simple-toasts/dist/style.css';
 
 export const metadata = {
   title: 'My Mantine app',

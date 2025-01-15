@@ -1,0 +1,26 @@
+{
+  "apps": [
+    {
+      "name": "wibu-storage-3120",
+      "script": "bun",
+      "args": "next start",
+      "cwd": "/root/projects/wibu-storage-staging",
+      "env": {
+        "PORT": "3120",
+        "NODE_ENV": "production"
+      },
+      "exec_mode": "fork",
+      "max_memory_restart": "2G",
+      "autorestart": true,
+      "error_file": "/root/logs/wibu-storage-staging_error.log",
+      "out_file": "/root/logs/wibu-storage-staging_out.log",
+      "merge_logs": true,
+      "max_size": "10M",
+      "rotate_interval": "1d",
+      "time": true,
+      "watch": false,
+      "instances": 1,
+      "namespace": "wibu-storage-staging"
+    }
+  ]
+}
