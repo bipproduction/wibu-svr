@@ -18,6 +18,12 @@ import projectRemove from "./project-remove";
 import projectUpdate from "./project-update";
 import projectBuildLogFindUniq from "./project-build-log-find-uniq";
 import projectDeployLogFindUniq from "./project-deploy-log-find-uniq";
+import projectPromote from "./project-promote";
+import projectPortFindMany from "./project-port-find-many";
+import projectPortCreate from "./project-port-create";
+import projectPortFindUniq from "./project-port-find-uniq";
+import projectConfigFindUniq from "./project-config-find-uniq";
+import projectConfigTextFindUniq from "./project-config-text-find-uniq";
 
 // Deployments
 const deployments = new Elysia({
@@ -134,6 +140,33 @@ const Projects = new Elysia({
     .post('/create', projectCreate)
     .put('/update/:id', projectUpdate)
     .delete('/remove/:id', projectRemove)
+    .post('/promote/:projectId/:commitId/:envGroupId', ({ params }) => {
+        return projectPromote({ projectId: params.projectId, commitId: params.commitId, envGroupId: params.envGroupId })
+    })
+    .get('/port/find-many/:projectId/:envGroupId', ({ params }) => {
+        return projectPortFindMany({ projectId: params.projectId, envGroupId: params.envGroupId })
+    })
+    .post('/port/create/:projectId/:envGroupId', ({ params, body }: { params: { projectId: string, envGroupId: string }, body: { ports: number[] } }) => {
+        return projectPortCreate({ projectId: params.projectId, envGroupId: params.envGroupId, ports: body.ports })
+    }, {
+        params: t.Object({
+            projectId: t.String(),
+            envGroupId: t.String()
+        }),
+        body: t.Object({
+            ports: t.Array(t.Number())
+        })
+    })
+    .get('/port/find-uniq/:projectId/:envGroupId', ({ params }) => {
+        return projectPortFindUniq({ projectId: params.projectId, envGroupId: params.envGroupId })
+    })
+    .get('/config/find-uniq/:projectId', ({ params }) => {
+        return projectConfigFindUniq({ projectId: params.projectId })
+    })
+    .get('/config/text/find-uniq/:projectId/:envGroupId', ({ params }) => {
+        return projectConfigTextFindUniq({ projectId: params.projectId, envGroupId: params.envGroupId })
+    })
+
 
 
 

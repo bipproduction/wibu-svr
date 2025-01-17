@@ -6,7 +6,7 @@ export default function OverviewLayout({
   children: React.ReactNode;
 }) {
   return (
-    <Stack pos={"relative"}>
+    <Stack>
       <Box
         style={{
           overflow: "auto",

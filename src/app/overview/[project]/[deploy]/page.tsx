@@ -1,16 +1,18 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import CustomButtonFun from "@/components/CustomButtonFun";
-import AppV2 from "@/utils/app-v2";
+import AppV2 from "@/lib/api/v2/util/app-v2";
 import {
+  Box,
+  Button,
+  Card,
   Container,
   Divider,
   Flex,
   Group,
   Loader,
-  Menu,
   Stack,
-  Text
+  Text,
 } from "@mantine/core";
 import { useShallowEffect } from "@mantine/hooks";
 import { Editor } from "@monaco-editor/react";
@@ -70,7 +72,12 @@ export default function DeployPage() {
   }
   return (
     <Stack>
-      <SelectMenuPromote />
+      <Group justify="end">
+        <SelectMenuPromote
+          projectId={projectId as string}
+          commitId={commitId as string}
+        />
+      </Group>
       <Flex p={"xs"} justify={"flex-start"}>
         <CustomButtonFun
           leftSection={<FaArrowLeft />}
@@ -93,11 +100,11 @@ export default function DeployPage() {
           <Text>Deploy</Text>
           <Text>{projectId}</Text>
           <Text>{commitId}</Text>
-          <Group>
+          <Flex>
             <CustomButtonFun onClick={getBuildLog}>
               Get Build Log
             </CustomButtonFun>
-          </Group>
+          </Flex>
           <Editor
             value={buildLog || ""}
             language="text"
@@ -116,10 +123,17 @@ export default function DeployPage() {
   );
 }
 
-function SelectMenuPromote() {
+function SelectMenuPromote({
+  projectId,
+  commitId,
+}: {
+  projectId: string;
+  commitId: string;
+}) {
   const { envGroup } = useSnapshot(state);
+  const [loading, setLoading] = useState(false);
   async function loadEnvGroup() {
-    const { data } = await AppV2.api.v2["env-group"]["find-all"].get();
+    const { data } = await AppV2.api.v2["env-group"]["find-many"].get();
     if (data) {
       state.envGroup = data.data;
     }
@@ -127,6 +141,34 @@ function SelectMenuPromote() {
   useShallowEffect(() => {
     loadEnvGroup();
   }, []);
+
+  async function promote({
+    projectId,
+    commitId,
+    envGroupId,
+  }: {
+    projectId: string;
+    commitId: string;
+    envGroupId: string;
+  }) {
+    try {
+      setLoading(true);
+      const { data } = await AppV2.api.v2.projects
+        .promote({
+          projectId: projectId,
+        })({ commitId: commitId })({ envGroupId: envGroupId })
+        .post();
+      if (data?.success) {
+        alert(data?.message);
+      } else {
+        alert(data?.message);
+      }
+    } catch (error) {
+      alert(error);
+    } finally {
+      setLoading(false);
+    }
+  }
   if (!envGroup)
     return (
       <Group justify={"center"} align={"center"} gap={"xs"}>
@@ -135,19 +177,29 @@ function SelectMenuPromote() {
       </Group>
     );
   return (
-    <Stack gap={0}>
-      <Menu>
-        <Menu.Target>
-          <CustomButtonFun leftSection={<FaArrowRight />}>
-            Promote
-          </CustomButtonFun>
-        </Menu.Target>
-        <Menu.Dropdown>
+    <Card>
+      <Stack gap={"md"}>
+        <Flex gap={"md"} align={"center"}>
+          <Box>
+            <FaArrowRight />
+          </Box>
+          <Text>Promote to</Text>
+        </Flex>
+        <Button.Group>
           {envGroup.map((env) => (
-            <Menu.Item key={env.id}>{env.name}</Menu.Item>
+            <Button
+              loading={loading}
+              variant="light"
+              key={env.id}
+              onClick={() =>
+                promote({ projectId, commitId, envGroupId: env.id })
+              }
+            >
+              {env.name}
+            </Button>
           ))}
-        </Menu.Dropdown>
-      </Menu>
-    </Stack>
+        </Button.Group>
+      </Stack>
+    </Card>
   );
 }

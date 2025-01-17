@@ -29,7 +29,7 @@ import {
 
 // import css date picker mantine
 import CustomButtonFun from "@/components/CustomButtonFun";
-import AppV2 from "@/utils/app-v2";
+import AppV2 from "@/lib/api/v2/util/app-v2";
 import "@mantine/dates/styles.css";
 import { useShallowEffect } from "@mantine/hooks";
 import moment from "moment";

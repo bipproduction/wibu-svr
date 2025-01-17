@@ -4,7 +4,7 @@ import { exec } from 'child_process'
 import { promisify } from 'util'
 const execAsync = promisify(exec)
 import prisma from '@/lib/prisma'
-import EnvStringParser from '@/utils/env-string-parse'
+import EnvStringParser from '@/lib/api/v2/util/EnvStringParse'
 import projectEnv from '@/utils/project-env'
 import fs from 'fs/promises'
 import path from 'path'
@@ -126,6 +126,7 @@ async function installDependencies(targetDir: string) {
 
 async function runMigrations(targetDir: string, envObj: Record<string, string>) {
     console.log('🔄 Running database migrations')
+    
     await execAsync(`source ~/.nvm/nvm.sh && $(which bunx) prisma db push`, {
         env: {
             ...envObj,

@@ -4,7 +4,7 @@
 
 import CustomButton from "@/components/CustomButton";
 import CustomButtonFun from "@/components/CustomButtonFun";
-import AppV2 from "@/utils/app-v2";
+import AppV2 from "@/lib/api/v2/util/app-v2";
 import {
   Box,
   Button,

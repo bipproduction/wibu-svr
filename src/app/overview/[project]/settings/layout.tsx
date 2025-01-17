@@ -10,6 +10,10 @@ const listSettings = [
     link: "/overview/[project]/settings/domains",
   },
   {
+    title: "Port",
+    link: "/overview/[project]/settings/port",
+  },
+  {
     title: "Environments",
     link: "/overview/[project]/settings/environments",
   },
@@ -47,7 +51,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         }}
         fluid
       >
-        <Flex gap={"xl"}>
+        <Flex
+          gap={"xl"}
+          wrap={{
+            base: "wrap",
+            md: "nowrap",
+          }}
+        >
           <Stack
             w={{
               base: "100%",

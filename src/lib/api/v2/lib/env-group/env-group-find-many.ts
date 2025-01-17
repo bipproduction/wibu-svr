@@ -1,6 +1,6 @@
 import prisma from "@/lib/prisma";
 
-async function envGroupFindAll() {
+async function envGroupFindMany() {
     const envGroup = await prisma.envGroup.findMany()
 
     return {
@@ -8,4 +8,4 @@ async function envGroupFindAll() {
     }
 }
 
-export default envGroupFindAll
+export default envGroupFindMany

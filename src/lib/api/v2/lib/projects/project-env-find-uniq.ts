@@ -1,5 +1,4 @@
 import prisma from "@/lib/prisma";
-
 async function projectEnvFindUniq({ projectId }: { projectId: string }) {
     const envGroup = await prisma.envGroup.findMany({
         include: {

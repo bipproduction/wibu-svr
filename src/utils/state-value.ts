@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { proxy } from "valtio"
 
 const state = proxy({

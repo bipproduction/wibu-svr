@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 const overview = {
     "project": {
         "name": "nama-project",

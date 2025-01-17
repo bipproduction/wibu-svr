@@ -1,5 +1,5 @@
 import { BuildLogStatus } from "@prisma/client"
-import DeployLog from "../DeployLog"
+import DeployLog from "../../util/DeployLog"
 import prisma from "@/lib/prisma"
 
 async function projectDeployLogFindUniq({ projectId, commitId }: { projectId: string, commitId: string }) {

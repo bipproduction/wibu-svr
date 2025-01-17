@@ -1,9 +1,10 @@
 import prisma from "@/lib/prisma"
-import EnvStringParser from "@/utils/env-string-parse"
 import projectEnv from "@/utils/project-env"
 import { spawn } from "child_process"
 import path from "path"
-import DeployLog from "../DeployLog"
+import DeployLog from "../../util/DeployLog"
+import EnvStringParser from "../../util/EnvStringParse"
+
 
 // Tambahkan konstanta untuk timeout
 const PROCESS_TIMEOUT = 600000; // 10 menit
@@ -28,12 +29,17 @@ async function cloneProject({ releasesPath, commitId, repository }: { releasesPa
             reject(error)
         })
 
-        child.on('close', () => {
-            DeployLog.info(commitId, "✅", "Clone project success")
-            resolve({
-                success: true,
-                message: "Clone project success"
-            })
+        child.on('close', (code) => {
+            if (code === 0) {
+                DeployLog.info(commitId, "✅", "Clone project success")
+                resolve({
+                    success: true,
+                    message: "Clone project success"
+                })
+            } else {
+                DeployLog.error(commitId, `Clone project failed with exit code ${code}`)
+                reject(new Error(`Clone project failed with exit code ${code}`))
+            }
         })
     })
 
@@ -58,12 +64,17 @@ async function checkoutCommit({ commitId, cwd }: { commitId: string, cwd: string
             DeployLog.error(commitId, error.toString())
             reject(error)
         })
-        child.on('close', () => {
-            DeployLog.info(commitId, "✅", "Checkout commit success")
-            resolve({
-                success: true,
-                message: "Checkout commit success"
-            })
+        child.on('close', (code) => {
+            if (code === 0) {
+                DeployLog.info(commitId, "✅", "Checkout commit success")
+                resolve({
+                    success: true,
+                    message: "Checkout commit success"
+                })
+            } else {
+                DeployLog.error(commitId, `Checkout commit failed with exit code ${code}`)
+                reject(new Error(`Checkout commit failed with exit code ${code}`))
+            }
         })
     })
 }
@@ -91,12 +102,17 @@ async function installDependencies({ commitId, cwd }: { commitId: string, cwd: s
             DeployLog.error(commitId, error.toString())
             reject(error)
         })
-        child.on('close', () => {
-            DeployLog.info(commitId, "✅", "Install dependencies success")
-            resolve({
-                success: true,
-                message: "Dependencies installed"
-            })
+        child.on('close', (code) => {
+            if (code === 0) {
+                DeployLog.info(commitId, "✅", "Install dependencies success")
+                resolve({
+                    success: true,
+                    message: "Dependencies installed"
+                })
+            } else {
+                DeployLog.error(commitId, `Install dependencies failed with exit code ${code}`)
+                reject(new Error(`Install dependencies failed with exit code ${code}`))
+            }
         })
     })
 }
@@ -125,12 +141,17 @@ async function runMigrations({ commitId, cwd, envObj }: { commitId: string, cwd:
             DeployLog.error(commitId, error.toString())
             reject(error)
         })
-        child.on('close', () => {
-            DeployLog.info(commitId, "✅", "Run migrations success")
-            resolve({
-                success: true,
-                message: "Migrations run"
-            })
+        child.on('close', (code) => {
+            if (code === 0) {
+                DeployLog.info(commitId, "✅", "Run migrations success")
+                resolve({
+                    success: true,
+                    message: "Migrations run"
+                })
+            } else {
+                DeployLog.error(commitId, `Run migrations failed with exit code ${code}`)
+                reject(new Error(`Run migrations failed with exit code ${code}`))
+            }
         })
     })
 }
@@ -143,6 +164,10 @@ async function getCommit({ commitId }: { commitId: string }) {
             project: true
         }
     })
+    if (!commit) {
+        DeployLog.error(commitId, "Commit tidak ditemukan")
+        return null
+    }
     DeployLog.info(commitId, "✅", "Get commit success")
     return commit
 }
@@ -188,12 +213,17 @@ async function buildProject({ commitId, cwd, envObj }: { commitId: string, cwd: 
             DeployLog.error(commitId, error.toString())
             reject(error)
         })
-        child.on('close', () => {
-            DeployLog.info(commitId, "✅", "Build project success")
-            resolve({
-                success: true,
-                message: "Build project success"
-            })
+        child.on('close', (code) => {
+            if (code === 0) {
+                DeployLog.info(commitId, "✅", "Build project success")
+                resolve({
+                    success: true,
+                    message: "Build project success"
+                })
+            } else {
+                DeployLog.error(commitId, `Build project failed with exit code ${code}`)
+                reject(new Error(`Build project failed with exit code ${code}`))
+            }
         })
     })
 }

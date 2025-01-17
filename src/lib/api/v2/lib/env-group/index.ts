@@ -1,10 +1,10 @@
 import Elysia from "elysia";
-import envGroupFindAll from "./env-group-find-all";
+import envGroupFindMany from "./env-group-find-many";
 
 const EnvGroup = new Elysia({
     prefix: "/env-group",
     tags: ["EnvGroup"]
 })
-    .get("/find-all", () => envGroupFindAll())
+    .get("/find-many", () => envGroupFindMany())
 
 export default EnvGroup

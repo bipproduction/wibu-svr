@@ -1,8 +1,9 @@
 import cors, { HTTPMethod } from "@elysiajs/cors";
 import swagger from "@elysiajs/swagger";
 import { Elysia } from "elysia";
-import Projects from "./lib/projects";
 import EnvGroup from "./lib/env-group";
+import Projects from "./lib/projects";
+import Utils from "./lib/utils";
 const corsConfig = {
     origin: "*",
     methods: ["GET", "POST", "PATCH", "DELETE", "PUT"] as HTTPMethod[],
@@ -18,7 +19,9 @@ const ApiV2 = new Elysia()
     .group('/api/v2', (app) => app
         .use(Projects)
         .use(EnvGroup)
+        .use(Utils)
     );
+
 
 export default ApiV2
 export type APIV2 = typeof ApiV2
