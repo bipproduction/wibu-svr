@@ -24,6 +24,9 @@ import projectPortCreate from "./project-port-create";
 import projectPortFindUniq from "./project-port-find-uniq";
 import projectConfigFindUniq from "./project-config-find-uniq";
 import projectConfigTextFindUniq from "./project-config-text-find-uniq";
+import projectDomainsFindUniq from "./project-subdomains-find-uniq";
+import projectSubdomainsCreate from "./project-subdomains-create";
+import projectSubdomainsFindMany from "./project-subdomains-find-many";
 
 // Deployments
 const deployments = new Elysia({
@@ -49,6 +52,33 @@ const commit = new Elysia({
     })
     .get('/commit-find-many/:projectId', ({ params }) => {
         return projectCommitFindMany({ projectId: params.projectId })
+    })
+
+// Domain
+const domain = new Elysia({
+    prefix: '/domains', detail: {
+        tags: ['Projects/Domains']
+    }
+})
+    .get('/project-domains-find-uniq/:projectId/:envGroupId/:serverConfigId', ({ params }) => {
+        return projectDomainsFindUniq({ projectId: params.projectId, envGroupId: params.envGroupId, serverConfigId: params.serverConfigId })
+    })
+    .post('/project-subdomains-create', async ({ body, set }) => {
+        const res = await projectSubdomainsCreate({ projectId: body.projectId, envGroupId: body.envGroupId, serverConfigId: body.serverConfigId, domainId: body.domainId })
+        set.status = res.status
+        return res
+    }, {
+        body: t.Object({
+            projectId: t.String(),
+            envGroupId: t.String(),
+            serverConfigId: t.String(),
+            domainId: t.String()
+        })
+    })
+    .get('/project-subdomains-find-many/:projectId', async ({ params, set }) => {
+        const res = await projectSubdomainsFindMany({ projectId: params.projectId })
+        set.status = res.status
+        return res
     })
 
 // Branch
@@ -132,6 +162,7 @@ const Projects = new Elysia({
     .use(env)
     .use(build)
     .use(deploy)
+    .use(domain)
     .get('/find-many', projectFindMany)
     .get('/find-first', projectFindFirst)
     .get('/find-unique/:id', ({ params }) => {

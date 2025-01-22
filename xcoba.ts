@@ -1,34 +1,36 @@
-import { spawn } from "bun";
+import prisma from "@/lib/prisma";
 
-async function apa(): Promise<string> {
-    return new Promise(async (resolve, reject) => {
-        // Pisahkan command dan arguments untuk kejelasan
-        const child = spawn(['echo', 'Hello, World!'], {
-            onExit(subprocess, exitCode, signalCode, error) {
-                if (error) {
-                    reject(error);
-                    return;
-                }
-                if (exitCode !== 0) {
-                    reject("exit code not 0");
-                    return;
-                }
-            },
-        });
+const projectId = "0e533d6d-b0de-401a-a222-45f119fb08f3"
+const branchName = "main"
 
-        const a = await new Response(child.stderr).text()
-        console.log(a)
-    });
-}
-
-// Penggunaan
-async function main() {
-    try {
-        const result = await apa();
-        console.log('Output:', result);
-    } catch (error) {
-        console.error('Error:', error);
+const projectData = await prisma.project.findUnique({
+    where: {
+        id: projectId
+    },
+    select: {
+        name: true,
+        repository: true,
+        Branch: {
+            select: {
+                name: true
+            }
+        }
     }
+})
+
+console.log(projectData)
+if (!projectData) {
+    console.log("[xcoba]", "[project not found]", projectId)
+    throw new Error("Project not found")
 }
 
-main();
+const branchData = await prisma.branch.findUnique({
+    where: {
+        projectId_name: {
+            projectId: projectId,
+            name: branchName
+        }
+    }
+})
+
+console.log(branchData)

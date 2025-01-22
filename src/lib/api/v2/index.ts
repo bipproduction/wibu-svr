@@ -4,6 +4,7 @@ import { Elysia } from "elysia";
 import EnvGroup from "./lib/env-group";
 import Projects from "./lib/projects";
 import Utils from "./lib/utils";
+import Settings from "./lib/settings";
 const corsConfig = {
     origin: "*",
     methods: ["GET", "POST", "PATCH", "DELETE", "PUT"] as HTTPMethod[],
@@ -20,6 +21,7 @@ const ApiV2 = new Elysia()
         .use(Projects)
         .use(EnvGroup)
         .use(Utils)
+        .use(Settings)
     );
 
 

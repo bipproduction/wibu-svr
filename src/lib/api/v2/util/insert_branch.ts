@@ -1,48 +1,7 @@
 import prisma from "@/lib/prisma";
 
-async function projectBranchSyncAll({ projectId }: { projectId: string }) {
-    if (!projectId) {
-        console.log("[projectBranchSyncAll]", "[projectId not found]", projectId)
-        return {
-            status: 404,
-            message: "ProjectId not found"
-        }
-    }
-    try {
+async function insertBranch({ projectId, url }: { projectId: string, url: string }) {
 
-        console.log("[projectBranchSyncAll]", "[projectId]", projectId)
-        const project = await prisma.project.findUnique({
-            where: {
-                id: projectId
-            },
-            select: {
-                repository: true
-            }
-        })
-        if (!project) {
-            console.log("[projectBranchSyncAll]", "[project not found]", projectId)
-            return {
-                status: 404,
-                message: "Project not found",
-            }
-        }
-        await syncBranchAll({ projectId, url: project.repository })
-        console.log("[projectBranchSyncAll]", "[branch synced successfully]", projectId)
-        return {
-            status: 200,
-            message: "Branch synced successfully",
-
-        }
-    } catch (error) {
-        console.error("[projectBranchSyncAll]", "[error]", error)
-        return {
-            status: 500,
-            message: "Failed to sync branch",
-        }
-    }
-}
-
-async function syncBranchAll({ projectId, url }: { projectId: string, url: string }) {
     if (!url || !projectId) {
         console.log("[inserting branch]", "[url or projectId not found]", projectId, url)
         throw new Error("Url or projectId not found")
@@ -67,10 +26,10 @@ async function syncBranchAll({ projectId, url }: { projectId: string, url: strin
     const allBranches: { name: string, commit: { sha: string } }[] = [];
 
     console.log("[inserting branch]", "[fetching all branches]", projectId, url);
-
+    
     while (hasMoreData) {
         const apiUrl = `https://api.github.com/repos/${owner}/${repository}/branches?per_page=100&page=${page}`;
-
+        
         const response = await fetch(apiUrl, {
             headers: { Accept: "application/vnd.github.v3+json" },
         });
@@ -81,7 +40,7 @@ async function syncBranchAll({ projectId, url }: { projectId: string, url: strin
         }
 
         const data: { name: string, commit: { sha: string } }[] = await response.json();
-
+        
         if (data.length === 0) {
             hasMoreData = false;
         } else {
@@ -112,4 +71,4 @@ async function syncBranchAll({ projectId, url }: { projectId: string, url: strin
     console.log(`inserting ${allBranches.length} branches success`);
 }
 
-export default projectBranchSyncAll
+export default insertBranch

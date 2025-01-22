@@ -14,25 +14,26 @@ datasource db {
 }
 
 model Project {
-  id             String           @id @default(uuid())
-  name           String
-  repository     String           @unique
-  createdAt      DateTime?        @default(now())
-  updatedAt      DateTime?        @updatedAt
-  active         Boolean?         @default(true)
-  envItem        EnvItem[]
-  Commit         Commit[]
-  ProjectCommit  ProjectCommit[]
-  Branch         Branch[]
-  PromoteHistory PromoteHistory[]
-  DeployHistory  DeployHistory[]
-  BuildLog       BuildLog[]
-  ProjectPort    ProjectPort[]
+  id               String             @id @default(uuid())
+  name             String
+  repository       String             @unique
+  createdAt        DateTime?          @default(now())
+  updatedAt        DateTime?          @updatedAt
+  active           Boolean?           @default(true)
+  envItem          EnvItem[]
+  Commit           Commit[]
+  ProjectCommit    ProjectCommit[]
+  Branch           Branch[]
+  PromoteHistory   PromoteHistory[]
+  DeployHistory    DeployHistory[]
+  BuildLog         BuildLog[]
+  ProjectPort      ProjectPort[]
+  ProjectSubDomain ProjectSubDomain[]
 }
 
 model Branch {
   id             String           @id @default(uuid())
-  name           String           @unique
+  name           String   
   sha            String?
   createdAt      DateTime?        @default(now())
   updatedAt      DateTime?        @updatedAt
@@ -45,14 +46,15 @@ model Branch {
 }
 
 model EnvGroup {
-  id             String           @id @default(uuid())
-  name           String           @unique
-  createdAt      DateTime?        @default(now())
-  updatedAt      DateTime?        @updatedAt
-  envItem        EnvItem[]
-  ProjectCommit  ProjectCommit[]
-  PromoteHistory PromoteHistory[]
-  ProjectPort    ProjectPort[]
+  id               String             @id @default(uuid())
+  name             String             @unique
+  createdAt        DateTime?          @default(now())
+  updatedAt        DateTime?          @updatedAt
+  envItem          EnvItem[]
+  ProjectCommit    ProjectCommit[]
+  PromoteHistory   PromoteHistory[]
+  ProjectPort      ProjectPort[]
+  ProjectSubDomain ProjectSubDomain[]
 }
 
 model EnvItem {
@@ -159,6 +161,42 @@ model ProjectPort {
   updatedAt  DateTime? @updatedAt
 
   @@unique([projectId, envGroupId])
+}
+
+model Domain {
+  id               String             @id @default(uuid())
+  name             String             @unique
+  createdAt        DateTime?          @default(now())
+  updatedAt        DateTime?          @updatedAt
+  ServerConfig     ServerConfig[]
+  ProjectSubDomain ProjectSubDomain[]
+}
+
+model ProjectSubDomain {
+  id             String       @id @default(uuid())
+  projectId      String
+  project        Project      @relation(fields: [projectId], references: [id])
+  serverConfigId String
+  serverConfig   ServerConfig @relation(fields: [serverConfigId], references: [id])
+  envGroupId     String
+  envGroup       EnvGroup     @relation(fields: [envGroupId], references: [id])
+  domainId       String
+  domain         Domain       @relation(fields: [domainId], references: [id])
+  createdAt      DateTime?    @default(now())
+  updatedAt      DateTime?    @updatedAt
+
+  @@unique([projectId, envGroupId, serverConfigId])
+}
+
+model ServerConfig {
+  id               String             @id @default(uuid())
+  name             String             @unique
+  domainId         String
+  domain           Domain             @relation(fields: [domainId], references: [id])
+  ports            Int[]
+  createdAt        DateTime?          @default(now())
+  updatedAt        DateTime?          @updatedAt
+  ProjectSubDomain ProjectSubDomain[]
 }
 
 enum BuildLogStatus {

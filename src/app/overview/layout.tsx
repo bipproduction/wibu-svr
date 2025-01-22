@@ -1,4 +1,15 @@
-import { Box, Container, Divider, Stack, Text } from "@mantine/core";
+"use client";
+
+import {
+  Box,
+  Button,
+  Container,
+  Divider,
+  Flex,
+  Stack,
+  Text,
+  Title
+} from "@mantine/core";
 
 export default function OverviewLayout({
   children,
@@ -13,6 +24,12 @@ export default function OverviewLayout({
         }}
         h={"100vh"}
       >
+        <Flex justify="space-between">
+          <Title order={2}>Overview</Title>
+          <Button component="a" href="/settings/domains" variant="transparent">
+            <Text>Settings</Text>
+          </Button>
+        </Flex>
         {children}
       </Box>
       <Stack>

@@ -1,13 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { exec } from 'child_process'
-import { promisify } from 'util'
-const execAsync = promisify(exec)
-import prisma from '@/lib/prisma'
 import EnvStringParser from '@/lib/api/v2/util/EnvStringParse'
+import prisma from '@/lib/prisma'
 import projectEnv from '@/utils/project-env'
+import { exec } from 'child_process'
 import fs from 'fs/promises'
 import path from 'path'
+import { promisify } from 'util'
+import getLatestCommitSha from '../../util/get_latest_commit_sha'
+import insertBranch from '../../util/insert_branch'
+const execAsync = promisify(exec)
 
 // Types
 type TypeBody = {
@@ -58,34 +60,6 @@ async function cleanup(projectDir: string, sha?: string) {
     }
 }
 
-async function getLatestCommitSha({ url, branch }: { url: string, branch: string }) {
-    const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
-
-    // Regex untuk mengekstrak owner dan repo dari berbagai format URL
-    const regex = /(?:https?:\/\/github\.com\/|git@github\.com:|^)([^\/]+)\/([^\/\.]+)(?:\.git)?/;
-    const match = cleanUrl.match(regex);
-
-    if (!match) {
-        throw new Error(`URL repository tidak valid: ${cleanUrl}`);
-    }
-
-    const owner = match[1];
-    const repository = match[2].replace('.git', '');
-    const apiUrl = `https://api.github.com/repos/${owner}/${repository}/branches`;
-
-    console.log("fetching branches")
-    const response = await fetch(apiUrl, {
-        headers: { Accept: "application/vnd.github.v3+json" },
-    });
-
-    if (!response.ok) {
-        throw new Error(`Failed to fetch branches: ${response.status} ${response.statusText}`);
-    }
-
-    const data: { name: string, commit: { sha: string } }[] = await response.json();
-    return data.find(v => v.name === branch)?.commit.sha
-}
-
 // Deployment Operations
 async function setupProjectDirectory(projectDir: string, releasesDir: string) {
     console.log(`📁 Creating project directory: ${projectDir}`)
@@ -126,7 +100,7 @@ async function installDependencies(targetDir: string) {
 
 async function runMigrations(targetDir: string, envObj: Record<string, string>) {
     console.log('🔄 Running database migrations')
-    
+
     await execAsync(`source ~/.nvm/nvm.sh && $(which bunx) prisma db push`, {
         env: {
             ...envObj,
@@ -167,6 +141,7 @@ async function setupSymlinks(operations: SymlinkOperation[]) {
 // Main Deploy Function
 async function deploy({ projectName, repository, projectId, envVariables }: DeployOptions) {
     if (!validateRepository(repository)) {
+        console.log("[deploy]", "[invalid repository]", repository)
         throw new DeployError('Invalid repository URL format', 'validation')
     }
 
@@ -174,16 +149,22 @@ async function deploy({ projectName, repository, projectId, envVariables }: Depl
     const releasesDir = path.join(projectDir, 'releases')
     const latestCommit = await getLatestCommitSha({ url: repository, branch: 'main' })
     if (!latestCommit) {
+        console.log("[deploy]", "[failed to get latest commit]", projectName, repository)
         throw new DeployError('Failed to get latest commit', 'get_latest_commit')
     }
     try {
+        console.log("[deploy]", "[setup project directory]", projectDir, releasesDir)
         await setupProjectDirectory(projectDir, releasesDir)
 
+        console.log("[deploy]", "[clone repository]", repository, latestCommit, releasesDir)
         const targetDir = await cloneRepository(repository, latestCommit, releasesDir)
+        console.log("[deploy]", "[install dependencies]", targetDir)
         await installDependencies(targetDir)
 
         const envObj = EnvStringParser.parse(envVariables)
+        console.log("[deploy]", "[run migrations]", targetDir, envObj)
         await runMigrations(targetDir, envObj)
+        console.log("[deploy]", "[build project]", targetDir, envObj)
         await buildProject(targetDir, envObj)
 
         const symlinkOperations: SymlinkOperation[] = [
@@ -199,10 +180,11 @@ async function deploy({ projectName, repository, projectId, envVariables }: Depl
             }
         ]
 
+        console.log("[deploy]", "[setup symlinks]", symlinkOperations)
         await setupSymlinks(symlinkOperations)
-
+        console.log("[deploy]", "[setup symlinks success]")
         // Update project commits dengan error handling yang lebih baik
-        console.log(`🔄 Updating project commit for ${projectId} ${latestCommit} in production`)
+        console.log("[deploy]", "[updating project commit for]", projectId, latestCommit, "in production")
         await prisma.projectCommit.upsert({
             where: {
                 projectId_envGroupId_commitId: {
@@ -220,11 +202,11 @@ async function deploy({ projectName, repository, projectId, envVariables }: Depl
                 envGroupId: 'production'
             }
         }).catch(error => {
-            console.error('❌ Failed to update project commit for production:', error)
+            console.error('[deploy]', '❌ Failed to update project commit for production:', error)
             throw new DeployError('Failed to update project commit for production', 'update_project_commit', error)
         })
 
-        console.log(`✅ Updated project commit for ${projectId} in preview`)
+        console.log(`[deploy]`, "[updated project commit for]", projectId, "in preview")
 
         await prisma.projectCommit.upsert({
             where: {
@@ -245,82 +227,45 @@ async function deploy({ projectName, repository, projectId, envVariables }: Depl
             }
         })
 
-        console.log('✅ Build completed successfully and project commit updated')
+        console.log("[deploy]", "[build completed successfully and project commit updated]")
         return {
             sha: latestCommit,
             message: "success"
         }
     } catch (error) {
-        console.error('❌ Deployment failed:', error)
+        console.error('[deploy]', '❌ Deployment failed:', error)
         try {
             await cleanup(projectDir, latestCommit)
         } catch (cleanupError) {
-            console.error('❌ Cleanup failed:', cleanupError)
+            console.error('[deploy]', '❌ Cleanup failed:', cleanupError)
         }
         throw error
     }
 }
 
-async function insertBranch({ projectId, url }: { projectId: string, url: string }) {
-    const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
 
-    // Regex untuk mengekstrak owner dan repo dari berbagai format URL
-    const regex = /(?:https?:\/\/github\.com\/|git@github\.com:|^)([^\/]+)\/([^\/\.]+)(?:\.git)?/;
-    const match = cleanUrl.match(regex);
-
-    if (!match) {
-        throw new Error(`URL repository tidak valid: ${cleanUrl}`);
-    }
-
-    const owner = match[1];
-    const repository = match[2].replace('.git', '');
-    const apiUrl = `https://api.github.com/repos/${owner}/${repository}/branches`;
-
-    console.log("fetching branches")
-    const response = await fetch(apiUrl, {
-        headers: { Accept: "application/vnd.github.v3+json" },
-    });
-
-    if (!response.ok) {
-        throw new Error(`Failed to fetch branches: ${response.status} ${response.statusText}`);
-    }
-
-    const data: { name: string, commit: { sha: string } }[] = await response.json();
-    console.log("inserting branches")
-    for (const branch of data) {
-        await prisma.branch.upsert({
-            where: {
-                projectId_name: {
-                    projectId: projectId,
-                    name: branch.name
-                }
-            },
-            update: {
-                sha: branch.commit.sha
-            },
-            create: {
-                name: branch.name,
-                projectId: projectId,
-                sha: branch.commit.sha
-            }
-        })
-    }
-    console.log("inserting branches success")
-}
 
 async function insertCommit({ url, branch, projectId }: { url: string, branch: string, projectId: string }) {
+    if (!url || !branch || !projectId) {
+        console.log("[inserting commit]", "[url or branch or projectId not found]", url, branch, projectId)
+        throw new Error("Url or branch or projectId not found")
+    }
+
+
     const branchData = await prisma.branch.findUnique({
         where: {
-            name: branch,
             projectId_name: {
                 projectId: projectId,
                 name: branch
             }
         }
     })
+
     if (!branchData) {
+        console.log("[inserting commit]", "[branch not found]", projectId, branch)
         throw new Error(`Branch ${branch} not found`)
     }
+    console.log("[inserting commit]", "branch found")
     // Hapus @ dari awal URL jika ada
     const cleanUrl = url.startsWith('@') ? url.substring(1) : url;
 
@@ -329,9 +274,10 @@ async function insertCommit({ url, branch, projectId }: { url: string, branch: s
     const match = cleanUrl.match(regex);
 
     if (!match) {
+        console.log("[inserting commit]", "url not valid")
         throw new Error(`URL repository tidak valid: ${cleanUrl}`);
     }
-
+    console.log("[inserting commit]", "url valid")
     const owner = match[1];
     const repository = match[2].replace('.git', '');
 
@@ -342,6 +288,7 @@ async function insertCommit({ url, branch, projectId }: { url: string, branch: s
     console.log("Repository:", `${owner}/${repository}`);
     console.log("Branch:", branch);
 
+    console.log("[inserting commit]", "fetching commits")
     const response = await fetch(apiUrl, {
         headers: {
             'Accept': 'application/vnd.github.v3+json',
@@ -350,12 +297,13 @@ async function insertCommit({ url, branch, projectId }: { url: string, branch: s
     });
 
     if (!response.ok) {
+        console.log("[inserting commit]", "fetching commits failed")
         const errorBody = await response.text();
         console.error("Response body:", errorBody);
         console.error("URL yang diakses:", apiUrl);
         throw new Error(`Gagal mengambil commits: ${response.status} ${response.statusText}`);
     }
-
+    console.log("[inserting commit]", "fetching commits success")
     const data = await response.json();
 
     const commits: any[] = data.map((commit: any) => ({
@@ -396,7 +344,7 @@ async function projectCreate({ body }: { body: TypeBody }) {
     if (!body.envVariables?.trim()) errors.push('Environment variables are required')
     if (body.repository && !validateRepository(body.repository)) errors.push('Invalid repository URL format')
 
-
+    console.log("[projectCreate]", "[errors]", errors)
     if (errors.length > 0) {
         console.error('❌ Invalid request body:', errors)
         return {
@@ -406,8 +354,7 @@ async function projectCreate({ body }: { body: TypeBody }) {
         }
     }
 
-
-    console.log('🔍 Inserting project data')
+    console.log("[projectCreate]", "[inserting project data]")
     const project = await prisma.project.upsert({
         where: { repository: body.repository },
         update: {},
@@ -416,29 +363,25 @@ async function projectCreate({ body }: { body: TypeBody }) {
             repository: body.repository
         }
     }).catch((error) => {
-        console.error('❌ Project creation failed:', error)
+        console.error("[projectCreate]", "[project creation failed]", error)
         throw new Error('Project creation failed')
     })
 
     // insert branch
-    console.log("inserting branch")
     await insertBranch({ projectId: project.id, url: body.repository })
-    console.log("inserting branch success")
-    console.log("inserting commit")
+
     await insertCommit({ url: body.repository, branch: 'main', projectId: project.id })
-    console.log("inserting commit success")
 
     const envGroups = await prisma.envGroup.findMany()
-    console.log("envGroup", envGroups)
 
     if (envGroups.length === 0) {
-        console.error('❌ Env group production not found')
+        console.error("[projectCreate]", "[env group production not found]")
         throw new Error('Env group production not found')
     }
 
     for (const env of envGroups) {
         // insert env production
-        console.log("inserting env production")
+        console.log("[projectCreate]", "[inserting env production]", project.id, env.id)
         await prisma.envItem.upsert({
             where: {
                 projectId_envGroupId: {
@@ -457,17 +400,17 @@ async function projectCreate({ body }: { body: TypeBody }) {
         })
     }
 
-    console.log("inserting env production success")
+    console.log("[projectCreate]", "[inserting env production success]")
 
     if (!project.repository) {
-        console.error('❌ Project creation failed because repository is required')
+        console.error("[projectCreate]", "[project creation failed because repository is required]")
         return {
             status: 500,
             message: 'Repository is required for deployment'
         }
     }
 
-    console.log(`📦 Starting deployment for project: ${body.name}`)
+    console.log("[projectCreate]", "[starting deployment for project]", body.name)
     const deployResult = await deploy({
         projectName: project.id,
         repository: project.repository,
@@ -484,9 +427,5 @@ async function projectCreate({ body }: { body: TypeBody }) {
         }
     }
 }
-
-
-
-
 
 export default projectCreate;

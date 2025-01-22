@@ -158,12 +158,9 @@ function GeneratePortForm({
   const [listPort, setListPort] = useState<number[] | null>(null);
   const [loading, setLoading] = useState(false);
   async function handleGeneratePort() {
-    const { data } = await AppV2.api.v2.utils["find-port"].get({
-      query: {
-        count,
-      },
-    });
-    console.log(data);
+    const { data } = await AppV2.api.v2.utils["port-find-available"]({
+      count,
+    }).get();
     if (data) {
       setListPort(data);
     }

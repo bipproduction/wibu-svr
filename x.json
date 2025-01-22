@@ -1,26 +1,192 @@
 {
-  "apps": [
+  "listConfigLocal": [
     {
-      "name": "wibu-storage-3120",
-      "script": "bun",
-      "args": "next start",
-      "cwd": "/root/projects/wibu-storage-staging",
-      "env": {
-        "PORT": "3120",
-        "NODE_ENV": "production"
-      },
-      "exec_mode": "fork",
-      "max_memory_restart": "2G",
-      "autorestart": true,
-      "error_file": "/root/logs/wibu-storage-staging_error.log",
-      "out_file": "/root/logs/wibu-storage-staging_out.log",
-      "merge_logs": true,
-      "max_size": "10M",
-      "rotate_interval": "1d",
-      "time": true,
-      "watch": false,
-      "instances": 1,
-      "namespace": "wibu-storage-staging"
+      "name": "muku",
+      "ServerConfig": {
+        "subdomains": [
+          {
+            "id": "darmasaba",
+            "domainId": "muku",
+            "name": "darmasaba",
+            "ports": [
+              5001,
+              5002,
+              5003,
+              5004
+            ]
+          },
+          {
+            "id": "hipmi",
+            "domainId": "muku",
+            "name": "hipmi",
+            "ports": [
+              3037,
+              3038,
+              3039,
+              3040
+            ]
+          },
+          {
+            "id": "test",
+            "domainId": "muku",
+            "name": "test",
+            "ports": [
+              3005,
+              3009,
+              3010,
+              3011
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "wibudev",
+      "ServerConfig": {
+        "subdomains": [
+          {
+            "id": "stg-darmasaba",
+            "domainId": "wibudev",
+            "name": "stg-darmasaba",
+            "ports": [
+              3110
+            ]
+          },
+          {
+            "id": "wa",
+            "domainId": "wibudev",
+            "name": "wa",
+            "ports": [
+              3001
+            ]
+          },
+          {
+            "id": "wibu-storage",
+            "domainId": "wibudev",
+            "name": "wibu-storage",
+            "ports": [
+              3120,
+              3121,
+              3122,
+              3123
+            ]
+          },
+          {
+            "id": "io",
+            "domainId": "wibudev",
+            "name": "io",
+            "ports": [
+              3003
+            ]
+          },
+          {
+            "id": "default",
+            "domainId": "wibudev",
+            "name": "default",
+            "ports": [
+              3000
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "listConfigRemote": [
+    {
+      "name": "muku",
+      "ServerConfig": [
+        {
+          "id": "darmasaba",
+          "ports": [
+            5001,
+            5002,
+            5003,
+            5004
+          ],
+          "domainId": "muku",
+          "name": "darmasaba"
+        },
+        {
+          "id": "hipmi",
+          "ports": [
+            3037,
+            3038,
+            3039,
+            3040
+          ],
+          "domainId": "muku",
+          "name": "hipmi"
+        },
+        {
+          "id": "test",
+          "ports": [
+            3005,
+            3009,
+            3010,
+            3011
+          ],
+          "domainId": "muku",
+          "name": "test"
+        },
+        {
+          "id": "apa",
+          "ports": [
+            3012,
+            3013,
+            3017
+          ],
+          "domainId": "muku",
+          "name": "apa itu"
+        }
+      ]
+    },
+    {
+      "name": "wibudev",
+      "ServerConfig": [
+        {
+          "id": "stg-darmasaba",
+          "ports": [
+            3110
+          ],
+          "domainId": "wibudev",
+          "name": "stg-darmasaba"
+        },
+        {
+          "id": "wa",
+          "ports": [
+            3001
+          ],
+          "domainId": "wibudev",
+          "name": "wa"
+        },
+        {
+          "id": "wibu-storage",
+          "ports": [
+            3120,
+            3121,
+            3122,
+            3123
+          ],
+          "domainId": "wibudev",
+          "name": "wibu-storage"
+        },
+        {
+          "id": "io",
+          "ports": [
+            3003
+          ],
+          "domainId": "wibudev",
+          "name": "io"
+        },
+        {
+          "id": "default",
+          "ports": [
+            3000
+          ],
+          "domainId": "wibudev",
+          "name": "default"
+        }
+      ]
     }
   ]
 }

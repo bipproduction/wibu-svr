@@ -5,7 +5,12 @@ import getPort, { portNumbers } from 'get-port';
 async function findPort({ count = 1, portStart = 3000, portEnd = 6000 }: { count?: number, portStart?: number, portEnd?: number }) {
 
     const getPortFromDb = await prisma.projectPort.findMany()
-    const listPort = getPortFromDb.map((item) => item.ports).flat()
+    const portFromConfig = await prisma.serverConfig.findMany({
+        select: {
+            ports: true,
+        }
+    })
+    const listPort = [getPortFromDb.map((item) => item.ports).flat(), portFromConfig.map((item) => item.ports).flat()].flat()
     const usedPorts = Array.from(new Set(listPort)) as number[]
 
     // Validasi input
